@@ -31,23 +31,30 @@ class WeatherVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-//        firstly {
-//            locationService.fetchLocation()
-//        }.then { [weak self] location in
-//            guard let self = self, let location = location else {
-//                return Promise(error: WeatherServiceError.unknown) // TODO: - fix
-//            }
-//
-//            return self.weatherService.fetchWeather(with: location)
-//        }.done { [weak self] weather -> Void in
-//            print(weather)
-//        }.catch { error in
-//            print(error)
-//        }
+        firstly {
+            locationService.authorize()
+        }.then { [weak self] _ -> Promise<Location> in
+            guard let self = self else { throw VCError.weakSelfDeinit }
+
+            return self.locationService.fetchLocation()
+        }.then { [weak self] location -> Promise<Weather> in
+            guard let self = self else { throw VCError.weakSelfDeinit }
+
+            return self.weatherService.fetchWeather(with: location)
+        }.done { [weak self] weather in
+            print(weather)
+        }.catch { error in
+            print(error)
+        }
     }
 
     private func configureUI() {
         view.backgroundColor = .systemTeal
         navigationController?.setNavigationBarHidden(true, animated: false)
     }
+}
+
+private enum VCError: Error {
+
+    case weakSelfDeinit
 }

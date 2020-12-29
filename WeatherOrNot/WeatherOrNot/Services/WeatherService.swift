@@ -8,6 +8,12 @@ protocol WeatherService {
 
 class DefaultWeatherService: WeatherService {
 
+    let weatherIconURLFormatter: WeatherIconURLFormatter
+
+    init(weatherIconURLFormatter: WeatherIconURLFormatter) {
+        self.weatherIconURLFormatter = weatherIconURLFormatter
+    }
+
     func fetchWeather(with location: Location) -> Promise<Weather> {
         var urlComponents = Constants.weatherURLConponents
         urlComponents.queryItems = [
@@ -20,9 +26,12 @@ class DefaultWeatherService: WeatherService {
 
         return firstly {
             URLSession.shared.dataTask(.promise, with: URLRequest(url: url))
-        }.compactMap { data, _ in
-            try JSONDecoder().decode(Weather.self, from: data)
-//            try (JSONSerialization.jsonObject(with: data) as? [String: Any])
+        }.map { data, _ in
+            try JSONDecoder().decode(WeatherResponseDTO.self, from: data)
+        }.map { [weak self] dto in
+            guard let self = self else { throw WeatherServiceError.unknown }
+
+            return Weather(withDTO: dto, iconURLFormatter: self.weatherIconURLFormatter)
         }
     }
 }
@@ -33,12 +42,12 @@ enum WeatherServiceError: Error {
 
 private enum Constants {
 
-    static let weatherURLConponents = URLComponents(string: "api.openweathermap.org/data/2.5/weather")!
+    static let weatherURLConponents = URLComponents(string: "https://api.openweathermap.org/data/2.5/weather")!
     static let appKey: String = "2ffedf5f3cc7cea9cbcc23dcefed4782"
     static let timeoutInterval: TimeInterval = 10.0
 }
 
-private extension Locale{
+private extension Locale {
 
     var measurementSystem : MeasurementSystemType {
         let string = (self as NSLocale).object(forKey: NSLocale.Key.measurementSystem) as! String
