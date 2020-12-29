@@ -11,27 +11,6 @@ protocol LocationService {
 
 class DefaultLocationService: NSObject, LocationService {
 
-    private enum LocationAuthState {
-        case enabled
-        case disabled
-
-        init?(_ status: CLAuthorizationStatus) {
-            switch status {
-            case .authorizedAlways, .authorizedWhenInUse:
-                self = .enabled
-
-            case .denied, .restricted:
-                self = .disabled
-
-            case .notDetermined:
-                return nil
-
-            @unknown default:
-                return nil
-            }
-        }
-    }
-
     private let locationManager = CLLocationManager()
     private var pendingAuthorizationPromises: [
         (promise: Promise<Void>, resolver: Resolver<Void>)
@@ -39,8 +18,6 @@ class DefaultLocationService: NSObject, LocationService {
     private var pendinglocationRequestPromises: [
         (promise: Promise<Location>, resolver: Resolver<Location>)
     ] = []
-
-    var location: CLLocation? { locationManager.location }
 
     // MARK: - Initializers
 
@@ -118,4 +95,25 @@ enum LocationServiceError: Error {
 
     case authError
     case noLocationFound
+}
+
+private enum LocationAuthState {
+    case enabled
+    case disabled
+
+    init?(_ status: CLAuthorizationStatus) {
+        switch status {
+        case .authorizedAlways, .authorizedWhenInUse:
+            self = .enabled
+
+        case .denied, .restricted:
+            self = .disabled
+
+        case .notDetermined:
+            return nil
+
+        @unknown default:
+            return nil
+        }
+    }
 }
