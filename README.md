@@ -1,1 +1,1 @@
-# WheatherOrNot
+# WeatherOrNot
