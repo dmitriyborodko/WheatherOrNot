@@ -33,6 +33,9 @@ class DefaultLocationService: NSObject, LocationService {
     func authorize() -> Promise<Void> {
         guard CLLocationManager.locationServicesEnabled() else { return .init(error: LocationServiceError.authError) }
         if LocationAuthState(locationManager.authorizationStatus) == .enabled { return .value(()) }
+        if LocationAuthState(locationManager.authorizationStatus) == .disabled {
+            return .init(error: LocationServiceError.authError)
+        }
 
         let pending = Promise<Void>.pending()
         pendingAuthorizationPromises.append(pending)
@@ -72,6 +75,18 @@ extension DefaultLocationService: CLLocationManagerDelegate {
         }
     }
 
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if case .enabled = LocationAuthState(manager.authorizationStatus) {
+            while !pendingAuthorizationPromises.isEmpty {
+                pendingAuthorizationPromises.removeFirst().resolver.fulfill(())
+            }
+        } else {
+            while !pendingAuthorizationPromises.isEmpty {
+                pendingAuthorizationPromises.removeFirst().resolver.reject(LocationServiceError.authError)
+            }
+        }
+    }
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first.flatMap(Location.init) {
             while !pendinglocationRequestPromises.isEmpty {
@@ -98,10 +113,12 @@ enum LocationServiceError: Error {
 }
 
 private enum LocationAuthState {
+
     case enabled
     case disabled
+    case undefined
 
-    init?(_ status: CLAuthorizationStatus) {
+    init(_ status: CLAuthorizationStatus) {
         switch status {
         case .authorizedAlways, .authorizedWhenInUse:
             self = .enabled
@@ -110,10 +127,10 @@ private enum LocationAuthState {
             self = .disabled
 
         case .notDetermined:
-            return nil
+            self = .undefined
 
         @unknown default:
-            return nil
+            self = .disabled
         }
     }
 }

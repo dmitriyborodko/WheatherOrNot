@@ -23,9 +23,10 @@ class ErrorCell: UITableViewCell, Reusable {
     }
 
     private func configureUI() {
+        titleLabel.numberOfLines = 0
         addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
-            make.top.bottom.equalToSuperview().inset(32.0)
+            make.edges.equalToSuperview().inset(32.0)
             make.centerX.equalToSuperview()
         }
     }
