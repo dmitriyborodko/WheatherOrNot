@@ -5,10 +5,13 @@ class Services {
     static let locationService: LocationService = DefaultLocationService()
 
     static let weatherIconURLFormatter: WeatherIconURLFormatter = DefaultWeatherIconURLFormatter()
-    static let windDirectionFormatter: WindDirectionFormatter = DefaultWindDirectionFormatter()
+    static let windFormatter: WindFormatter = DefaultWindFormatter()
+    static let temperatureFormatter: TemperatureFormatter = DefaultTemperatureFormatter()
 
     static let weatherService: WeatherService = DefaultWeatherService(
         weatherIconURLFormatter: weatherIconURLFormatter,
-        windDirectionFormatter: windDirectionFormatter
+        windFormatter: windFormatter,
+        temperatureFormatter: temperatureFormatter,
+        locale: { Locale.current }
     )
 }

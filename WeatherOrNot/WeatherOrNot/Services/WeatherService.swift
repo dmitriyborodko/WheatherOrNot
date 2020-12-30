@@ -9,20 +9,30 @@ protocol WeatherService {
 class DefaultWeatherService: WeatherService {
 
     let weatherIconURLFormatter: WeatherIconURLFormatter
-    let windDirectionFormatter: WindDirectionFormatter
+    let windFormatter: WindFormatter
+    let temperatureFormatter: TemperatureFormatter
+    let locale: () -> Locale
 
-    init(weatherIconURLFormatter: WeatherIconURLFormatter, windDirectionFormatter: WindDirectionFormatter) {
+    init(
+        weatherIconURLFormatter: WeatherIconURLFormatter,
+        windFormatter: WindFormatter,
+        temperatureFormatter: TemperatureFormatter,
+        locale: @escaping () -> Locale
+    ) {
         self.weatherIconURLFormatter = weatherIconURLFormatter
-        self.windDirectionFormatter = windDirectionFormatter
+        self.windFormatter = windFormatter
+        self.temperatureFormatter = temperatureFormatter
+        self.locale = locale
     }
 
     func fetchWeather(with location: Location) -> Promise<Weather> {
+        let selectedLocale = locale()
         var urlComponents = Constants.weatherURLConponents
         urlComponents.queryItems = [
             URLQueryItem(name: "lat", value: "\(location.latitude)"),
             URLQueryItem(name: "lon", value: "\(location.longitude)"),
             URLQueryItem(name: "appid", value: Constants.appKey),
-            URLQueryItem(name: "units", value: Locale.current.measurementSystem.rawValue)
+            URLQueryItem(name: "units", value: selectedLocale.measurementSystem.rawValue)
         ]
 
         guard let url = urlComponents.url else { return Promise(error: WeatherServiceError.unknown) }
@@ -37,7 +47,9 @@ class DefaultWeatherService: WeatherService {
             return Weather(
                 withDTO: dto,
                 iconURLFormatter: self.weatherIconURLFormatter,
-                windDirectionFormatter: self.windDirectionFormatter
+                windFormatter: self.windFormatter,
+                temperatureFormatter: self.temperatureFormatter,
+                locale: selectedLocale
             )
         }
     }

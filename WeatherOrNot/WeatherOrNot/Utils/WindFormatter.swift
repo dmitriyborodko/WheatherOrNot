@@ -1,14 +1,14 @@
 import Foundation
 
-protocol WindDirectionFormatter {
+protocol WindFormatter {
 
-    func format(_ degree: Double) -> String
+    func format(speed: Double, degree: Double) -> String
 }
 
-struct DefaultWindDirectionFormatter: WindDirectionFormatter {
+struct DefaultWindFormatter: WindFormatter {
 
-    func format(_ degree: Double) -> String {
-        return Direction(degree).rawValue
+    func format(speed: Double, degree: Double) -> String {
+        return "Wind: \(String(format: "%.1f", speed)) m/s, \(Direction(degree).rawValue)"
     }
 }
 

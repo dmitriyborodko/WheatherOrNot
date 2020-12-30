@@ -9,7 +9,6 @@ struct WeatherResponseDTO: Decodable {
 
 struct WeatherDTO: Decodable {
 
-    let main: String?
     let description: String?
     let icon: String?
 }
