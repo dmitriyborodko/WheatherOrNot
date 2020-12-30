@@ -10,18 +10,22 @@ struct Weather {
     let temperature: Double?
     let feelsLike: Double?
     let windSpeed: Double?
-    let windDirection: Int?
+    let windDirection: String?
 }
 
 extension Weather {
 
-    init(withDTO dto: WeatherResponseDTO, iconURLFormatter: WeatherIconURLFormatter) {
+    init(
+        withDTO dto: WeatherResponseDTO,
+        iconURLFormatter: WeatherIconURLFormatter,
+        windDirectionFormatter: WindDirectionFormatter
+    ) {
         self.overview = dto.weather?.first?.main
         self.description = dto.weather?.first?.description
         self.iconURL = dto.weather?.first?.icon.flatMap(iconURLFormatter.format)
         self.temperature = dto.main?.temp
         self.feelsLike = dto.main?.feelsLike
         self.windSpeed = dto.wind?.speed
-        self.windDirection = dto.wind?.deg
+        self.windDirection = dto.wind?.deg.flatMap(windDirectionFormatter.format)
     }
 }

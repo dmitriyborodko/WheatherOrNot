@@ -33,5 +33,5 @@ struct WeatherWindDTO: Decodable {
     }
 
     let speed: Double?
-    let deg: Int?
+    let deg: Double?
 }

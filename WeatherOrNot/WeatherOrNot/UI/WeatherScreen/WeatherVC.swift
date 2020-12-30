@@ -1,9 +1,11 @@
 import UIKit
 import PromiseKit
+import SnapKit
 
 class WeatherVC: UIViewController {
 
     private lazy var weatherOverallView: WeatherOverallView = .init()
+
     private let locationService: LocationService
     private let weatherService: WeatherService
 
@@ -31,6 +33,20 @@ class WeatherVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        loadData()
+    }
+
+    private func configureUI() {
+        view.backgroundColor = .systemTeal
+        navigationController?.setNavigationBarHidden(true, animated: false)
+
+        view.addSubview(weatherOverallView)
+        weatherOverallView.snp.makeConstraints { make in
+            make.top.left.right.equalToSuperview().inset(Constants.contentEdgeInsets)
+        }
+    }
+
+    private func loadData() {
         firstly {
             locationService.authorize()
         }.then { [weak self] _ -> Promise<Location> in
@@ -47,14 +63,14 @@ class WeatherVC: UIViewController {
             print(error)
         }
     }
-
-    private func configureUI() {
-        view.backgroundColor = .systemTeal
-        navigationController?.setNavigationBarHidden(true, animated: false)
-    }
 }
 
 private enum VCError: Error {
 
     case weakSelfDeinit
+}
+
+private enum Constants {
+
+    static let contentEdgeInsets: UIEdgeInsets = .init(top: 16.0, left: 16.0, bottom: 16.0, right: 16.0)
 }

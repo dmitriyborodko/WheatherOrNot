@@ -9,9 +9,11 @@ protocol WeatherService {
 class DefaultWeatherService: WeatherService {
 
     let weatherIconURLFormatter: WeatherIconURLFormatter
+    let windDirectionFormatter: WindDirectionFormatter
 
-    init(weatherIconURLFormatter: WeatherIconURLFormatter) {
+    init(weatherIconURLFormatter: WeatherIconURLFormatter, windDirectionFormatter: WindDirectionFormatter) {
         self.weatherIconURLFormatter = weatherIconURLFormatter
+        self.windDirectionFormatter = windDirectionFormatter
     }
 
     func fetchWeather(with location: Location) -> Promise<Weather> {
@@ -19,7 +21,8 @@ class DefaultWeatherService: WeatherService {
         urlComponents.queryItems = [
             URLQueryItem(name: "lat", value: "\(location.latitude)"),
             URLQueryItem(name: "lon", value: "\(location.longitude)"),
-            URLQueryItem(name: "appid", value: Constants.appKey)
+            URLQueryItem(name: "appid", value: Constants.appKey),
+            URLQueryItem(name: "units", value: Locale.current.measurementSystem.rawValue)
         ]
 
         guard let url = urlComponents.url else { return Promise(error: WeatherServiceError.unknown) }
@@ -31,7 +34,11 @@ class DefaultWeatherService: WeatherService {
         }.map { [weak self] dto in
             guard let self = self else { throw WeatherServiceError.unknown }
 
-            return Weather(withDTO: dto, iconURLFormatter: self.weatherIconURLFormatter)
+            return Weather(
+                withDTO: dto,
+                iconURLFormatter: self.weatherIconURLFormatter,
+                windDirectionFormatter: self.windDirectionFormatter
+            )
         }
     }
 }
@@ -49,15 +56,12 @@ private enum Constants {
 
 private extension Locale {
 
-    var measurementSystem : MeasurementSystemType {
-        let string = (self as NSLocale).object(forKey: NSLocale.Key.measurementSystem) as! String
-
-        return MeasurementSystemType(rawValue: string)!
+    enum MeasurementSystemType: String {
+        case imperial = "imperial"
+        case metric = "metric"
     }
 
-    enum MeasurementSystemType: String {
-        case us = "U.S."
-        case uk = "U.K."
-        case metric = "Metric"
+    var measurementSystem : MeasurementSystemType {
+        return usesMetricSystem ? .metric : .imperial
     }
 }
