@@ -14,21 +14,18 @@ class WeatherVC: UIViewController {
 
     private var state: State = .loading
 
-    private let reloadAnimator: UIViewPropertyAnimator = .init(
-        duration: Constants.animationDuration,
-        curve: .easeInOut,
-        animations: nil
-    )
-
     private let locationService: LocationService
     private let weatherService: WeatherService
+    private let imageService: ImageService
 
     init(
         locationService: LocationService = Services.locationService,
-        weatherService: WeatherService = Services.weatherService
+        weatherService: WeatherService = Services.weatherService,
+        imageService: ImageService = Services.imageService
     ) {
         self.locationService = locationService
         self.weatherService = weatherService
+        self.imageService = imageService
 
         super.init(nibName: nil, bundle: nil)
     }
@@ -67,7 +64,7 @@ class WeatherVC: UIViewController {
     }
 
     private func configureUI() {
-        view.backgroundColor = .systemTeal
+        view.backgroundColor = .systemBackground
         navigationController?.setNavigationBarHidden(true, animated: false)
 
         tableView.backgroundColor = nil
@@ -78,19 +75,15 @@ class WeatherVC: UIViewController {
     }
 
     private func reloadTableView() {
-        reloadAnimator.stopAnimation(true)
-        reloadAnimator.addAnimations {
-            switch self.state {
-            case .loading:
-                self.tableView.refreshControl?.beginRefreshing()
+        switch self.state {
+        case .loading:
+            self.tableView.refreshControl?.beginRefreshing()
 
-            case .presenting, .error:
-                self.tableView.refreshControl?.endRefreshing()
-            }
-
-            self.tableView.reloadData()
+        case .presenting, .error:
+            self.tableView.refreshControl?.endRefreshing()
         }
-        reloadAnimator.startAnimation()
+
+        self.tableView.reloadData()
     }
 
     private func loadData() {
@@ -142,10 +135,7 @@ extension WeatherVC: UITableViewDataSource {
             return UITableViewCell()
 
         case .presenting(let weather):
-            let cell: WeatherCell = tableView.registerAndDequeueReusableCell()
-            cell.temperature = weather.temperature
-
-            return cell
+            return dequeueWeatherCell(in: tableView, with: weather)
 
         case .error(let error):
             let cell: ErrorCell = tableView.registerAndDequeueReusableCell()
@@ -154,15 +144,28 @@ extension WeatherVC: UITableViewDataSource {
             return cell
         }
     }
+
+    private func dequeueWeatherCell(in tableView: UITableView, with weather: Weather) -> UITableViewCell {
+        let cell: WeatherCell = tableView.registerAndDequeueReusableCell()
+        cell.temperature = weather.temperature
+        cell.feelsLike = weather.feelsLike
+        cell.descriptionText = weather.description
+        cell.windText = weather.wind
+
+        cell.icon = #imageLiteral(resourceName: "camera")
+        if let iconURL = weather.iconURL {
+            firstly {
+                imageService.fetchImage(with: iconURL)
+            }.done { [weak cell] image in
+                cell?.icon = image
+            }.cauterize()
+        }
+
+        return cell
+    }
 }
 
 private enum VCError: Error {
 
     case weakSelfDeinit
-}
-
-private enum Constants {
-
-    static let contentEdgeInsets: UIEdgeInsets = .init(top: 16.0, left: 16.0, bottom: 16.0, right: 16.0)
-    static let animationDuration: TimeInterval = 0.2
 }

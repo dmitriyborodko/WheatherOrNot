@@ -23,7 +23,8 @@ extension Weather {
         self.description = dto.weather?.first?.description
         self.iconURL = dto.weather?.first?.icon.flatMap(iconURLFormatter.format)
         self.temperature = dto.main?.temp.flatMap { temperatureFormatter.formatTemperature($0, locale: locale) }
-        self.feelsLike = dto.main?.feelsLike.flatMap { temperatureFormatter.formatTemperature($0, locale: locale) }
+        self.feelsLike = dto.main?.feelsLike
+            .flatMap { temperatureFormatter.formatFeelsLikeDescription($0, locale: locale) }
 
         if let windSpeed = dto.wind?.speed, let windDegree = dto.wind?.speed {
             self.wind = windFormatter.format(speed: windSpeed, degree: windDegree)

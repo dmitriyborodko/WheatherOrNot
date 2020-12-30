@@ -14,4 +14,6 @@ class Services {
         temperatureFormatter: temperatureFormatter,
         locale: { Locale.current }
     )
+
+    static let imageService: ImageService = DefaultImageService()
 }
